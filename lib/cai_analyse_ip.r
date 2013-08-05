@@ -1,6 +1,14 @@
-# ip分布计算
-# source('/home/windows/Dropbox/code/r/cai_analyse_ip.r')
-cai_analyse_ip <- function(x) {
+CaiAnalyseIp <- function(x) {
+  # 根据IP的分布数据判断应用是否作弊
+  # 
+  # Args:
+  #  x: 列表数据
+  #     x$aid: 向量，格式如：aid=2222
+  #     x$ip:  向量，格式如：ip=127.3.3.3
+  # Returns:
+  #   每个应用的IP分布数据
+  
+  
   # 格式化数据
   x$aid <- substr(x$aid, 5, 100)
   n <- length(x$aid)
@@ -36,7 +44,7 @@ cai_analyse_ip <- function(x) {
     lst[[i]] = unique(x$ip[which(x$aid == i)])
   }
   
-  tmp_lst <- list()      #记录重合的应用
+  tmp_lst <- list()      # 记录重合的应用
   for (i in aid_sort) {
     si <- lst[[as.character(i)]]
     #print(c("APP: ", i))
@@ -49,7 +57,7 @@ cai_analyse_ip <- function(x) {
         tmp <- li / ui
         #print(c("异常", i, j, li, ui, tmp, length(si), length(sj)))
         if (tmp > 0.1) {
-          tmp_lst <- rbind(tmp_lst, c(i, j, li, ui, tmp) )
+          tmp_lst <- rbind(tmp_lst, c(i, j, li, ui, tmp))
           #print(c("IP重合率", i, j, li, ui, tmp))
           #print(list(si,sj))
         }
@@ -58,8 +66,6 @@ cai_analyse_ip <- function(x) {
   }
   
   print(tmp_lst)
-  
-  # 重合度汇总聚合
   
   # return 
   return(ip_lst)
