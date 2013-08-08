@@ -7,3 +7,5 @@ cai_init <- function() {
 }
 
 cai_init()
+
+print("init OK")
