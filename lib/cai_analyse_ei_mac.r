@@ -29,6 +29,7 @@ CaiAnalyseEiMac <- function(x) {
   # 汇总唯一值的个数
   tmp.lst <- lapply(tmp.lst, FUN=function(x){return(length(unique(x)))})
   
+  options(scipen=3)                     # 避免输出时使用科学计数法
   tmp.mac.n <- length(tmp.lst)
   print(c(tmp.mac.n, n/tmp.mac.n, tmp.lst[[which.max(tmp.lst)]], length(tmp.lst[tmp.lst > 1]) / tmp.mac.n))
   
