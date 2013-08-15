@@ -1,6 +1,8 @@
 CaiAnalyseEiMacV2 <- function(x) {
   # 分析应用中，一个mac对应多个imei地址的情况
   #
+  # Version: 20130814
+  #
   # Args:
   #   x: list类型，待分析数据
   #     x$aid: 应用ID，格式例如：aid=23。（下面的格式也类同）
@@ -18,7 +20,7 @@ CaiAnalyseEiMacV2 <- function(x) {
   options(scipen=3)
   
   # 计算去重后的频数
-  # 避免在
+  # 避免在循环里面不断的生成匿名函数
   x.rate.cal.fn <- function(x) length(unique(x))
   
   # 计算总体一个mac对应多个imei的情况
