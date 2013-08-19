@@ -8,7 +8,11 @@ CaiInit <- function(p.path="") {
   # 能否获取当前文件所在的路径？
   lib.path <- ifelse(p.path == "", "/home/windows/Dropbox/code/r/R/lib/", p.path)
   #setwd(lib.path)
-  lapply(list.files(path=lib.path, pattern='\\.r$'), source)
+  
+  CaiSource <- function(x, p.path) {
+    source(paste(p.path, x, sep=""))
+  }
+  lapply(list.files(path=lib.path, pattern='\\.r$'), CaiSource, lib.path)
 }
 
 CaiInit()
