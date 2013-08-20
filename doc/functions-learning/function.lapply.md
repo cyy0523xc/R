@@ -54,6 +54,17 @@ $b
 
 ```
 
+一个实际的例子：一次性加载某个目录下的R文件
+```
+  CaiSource <- function(x, p.path) {
+    source(paste(p.path, x, sep=""))
+  }
+  
+  # lib.path是指定的目录
+  lapply(list.files(path=lib.path, pattern='\\.[rR]$'), CaiSource, lib.path)
+```
+
+
 ## sapply
 ```
 sapply(X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)

@@ -12,7 +12,7 @@ CaiInit <- function(p.path="") {
   CaiSource <- function(x, p.path) {
     source(paste(p.path, x, sep=""))
   }
-  lapply(list.files(path=lib.path, pattern='\\.r$'), CaiSource, lib.path)
+  lapply(list.files(path=lib.path, pattern='\\.[rR]$'), CaiSource, lib.path)
 }
 
 CaiInit()
