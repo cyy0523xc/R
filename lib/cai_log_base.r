@@ -25,7 +25,7 @@ CaiLogBase.load <- function(filename) {
   
   # 处理字段名
   x <- scan(filename, what="", sep="&", nlines=1)
-  fields.name <- sapply(x, FUN=function(x){x <- strsplit(x, split="=")[[1]][1]})
+  fields.name <- sapply(x, FUN=function(x){strsplit(x, split="=")[[1]][1]})
   fields.name <- as.list(tapply(fields.name, fields.name, FUN=function(x){x}))
   
   # 读入数据
@@ -44,6 +44,20 @@ CaiLogBase.one.field.stat <- function(x, p.is.total = T) {
   tmp.x <- tapply(x, x, FUN=length, simplify=F)
   ifelse(p.is.total, tmp.x[order(tmp.x)], tmp[order(tmp.x)] / length(x))
 }
+
+CaiLogBase.one.field.stat2 <- function(x, p.is.total = T) {
+  # 对一个向量进行频数统计
+  #
+  # Args:
+  #   x: 向量
+  #   p.is.total: 如为T，则统计频数，如为F，则统计频率
+  # Returns:
+  #   list
+  
+  tmp.x <- tapply(x, x, FUN=length, simplify=F)
+  ifelse(p.is.total, tmp.x[order(tmp.x)], tmp[order(tmp.x)] / length(x))
+}
+
 
 CaiLogBase.two.fields.relate.stat <- function(y, x, p.is.total = T, p.is.unique = T) {
   # 变量y关联到分组变量x上的频数统计
