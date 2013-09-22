@@ -5,6 +5,12 @@ CaiLoadRData <- function() {
   #load("/home/windows/Dropbox/code/r/R/data/workspace.RData")
 }
 
+CaiInstallPackages <- function(pkgs) {
+  ins.pkgs <- .packages(all.available=T)
+  pkgs <- pkgs[!(pkgs %in% ins.pkgs)]
+  lapply(pkgs, FUN=install.packages)
+}
+
 CaiTapply <- function (X, INDEX, FUN = NULL, ..., simplify = TRUE) 
 {
   FUN <- if (!is.null(FUN)) 
