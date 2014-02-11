@@ -12,8 +12,11 @@ CaiInit <- function() {
                      'D:/Dropbox/code/r/R/lib/')
   #setwd(lib.path)
   
+  lib.path
   CaiSource <- function(x, p.path) {
+    print(x)
     source(paste(p.path, x, sep=""))
+    print(' ---> ok')
   }
   lapply(list.files(path=lib.path, pattern='\\.[rR]$'), CaiSource, lib.path)
 }
@@ -23,7 +26,7 @@ CaiInit()
 # 载入需用的packages
 # FNN: Fast Nearest Neighbour
 # e1071提供朴素贝叶斯分类器
-CaiInstallPackages(c("XML", "FNN", "RCurl", "e1071", "RODBC", "rjson"))
+#CaiInstallPackages(c("XML", "FNN", "RCurl", "e1071", "RODBC", "rjson"))
 
 
 # 保存工作空间的内容
