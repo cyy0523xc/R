@@ -15,17 +15,30 @@ CaiPos <- function (p.data)
     # return data
     retdata <- list()
 
+    # 基本数据统计
+    t.stat <- list()
+    t.stat['成交次数'] <- length(unique(p.data[['单号']]))
+    t.stat['天数'] <- length(unique(p.data[['销售日期']]))
+    #t.stat['日均成交次数'] <- t.stat[[]]
+    #t.stat[''] <- length(unique[['']])
+    #t.stat[''] <- length(unique[['']])
+    #t.stat[''] <- length(unique[['']])
+    #t.stat[''] <- length(unique[['']])
+    #t.stat[''] <- length(unique[['']])
+    #t.stat[''] <- length(unique[['']])
+    #t.stat[''] <- length(unique[['']])
+
     # 每日趋势
-    retdata$day <- CaiPosField(p.data, '销售日期', TRUE)
+    retdata$day <- CaiPosField(p.data, '销售日期', p.sortby.field = '销售日期', p.decreasing = FALSE)
 
     # 星期分析
-    retdata$weekday <- CaiPosField(p.data, '星期', TRUE, c.week)
+    retdata$weekday <- CaiPosField(p.data, '星期', p.sort.fields = c.week)
 
     # 上下午分析
-    retdata$worktime <- CaiPosField(p.data, '工作时间段', TRUE, c('上午', '下午'))
+    retdata$worktime <- CaiPosField(p.data, '工作时间段', p.sort.fields = c('上午', '下午'))
 
     # 时段分析
-    retdata$time <- CaiPosField(p.data, '时间段', TRUE)
+    retdata$time <- CaiPosField(p.data, '时间段', p.sortby.field = '时间段', p.decreasing = FALSE)
 
     # 品类分析
     retdata$cat <- CaiPosField(p.data, '品类')
@@ -54,21 +67,22 @@ CaiPos <- function (p.data)
     # 订单分析 
     retdata$order_detail = list()
     # 订单对应的商品数量
-    retdata$order_detail$pnum  <- aggregate(p.data['数量'], p.data['单号'], sum)
-    names(retdata$order_detail$pnum) <- c('单号', '商品件数')
+    retdata$order_detail  <- aggregate(p.data['数量'], p.data['单号'], sum)
+    names(retdata$order_detail) <- c('单号', '商品件数')
     # 订单对应的成交额
-    retdata$order_detail$income<- aggregate(p.data['销售价'] * p.data['数量'], p.data['单号'], sum)
-    names(retdata$order_detail$income) <- c('单号', '成交额')
+    t.income<- aggregate(p.data['销售价'] * p.data['数量'], p.data['单号'], sum)
+    retdata$order_detail['成交额']<- t.income['销售价']
     # 订单对应的折扣率
-    retdata$order_detail$off   <- aggregate(p.data['原价金额'], p.data['单号'], sum)
-    retdata$order_detail$off   <- retdata$order_detail$off / retdata$order_detail$price
-    names(retdata$order_detail$off) <- c('单号', '折扣率')
+    t.off   <- aggregate(p.data['原价金额'], p.data['单号'], sum)
+    retdata$order_detail['折扣率'] <- t.income['销售价'] / t.off['原价金额'] 
 
-    # 订单分析
+    # 成交商品件数分析
     retdata$order <- list()
-    retdata$order$pnum   <- table(retdata$order_detail$pnum['商品件数'])
-    retdata$order$income <- aggregate(retdata$order_detail$income['成交额'], retdata$order_detail$pnum['商品件数'], sum)
-    #retdata$order$off    <- aggregate(retdata$order_detail$off['销售价'], retdata$order_detail$pnum['数量'], sum)
+    retdata$order <- aggregate(retdata$order_detail['成交额'], retdata$order_detail['商品件数'], sum)
+    t.pnum   <- table(retdata$order_detail['商品件数'])
+    t.off    <- aggregate(retdata$order_detail['折扣率'], retdata$order_detail['商品件数'], mean)
+    retdata$order['成交次数'] <- t.pnum
+    retdata$order['折扣率'] <- t.off['折扣率']
     
     
     # return
@@ -88,24 +102,53 @@ CaiCalPosSection <- function (p.data, p.index.field, p.steps = 10) {
     p.data[t.sec.field] <- t.min + t.sec * trunc((p.data[p.index.field] - t.min) / t.sec)
     
     # 字段透视
-    CaiPosField(p.data, t.sec.field, p.sortby.field=TRUE)
+    CaiPosField(p.data, t.sec.field)
 }
 
-CaiPosField <- function (p.data, p.index.field, p.sortby.field = FALSE, p.sort.fields = c()) {
+CaiPosField <- function (p.data, p.index.field, p.sortby.field = '', p.sort.fields = c(), p.decreasing = TRUE) {
     # 对一个字段进行透视
 
-    retdata = list()
-    # 订单数量
-    retdata$count   <- aggregate(p.data['单号'], p.data[p.index.field], function(x){length(unique(x))})
-    names(retdata$count) <- c(p.index.field, '成交次数')
-    # 单品数
-    retdata$product = aggregate(p.data['品名'], p.data[p.index.field], function(x){length(unique(x))})
-    names(retdata$product) <- c(p.index.field, '单品数')
-    # 商品件数
-    retdata$pnum    = aggregate(p.data['数量'], p.data[p.index.field], sum)
-    names(retdata$pnum) <- c(p.index.field, '商品件数')
-    # 成交额
-    retdata$income  = aggregate(p.data['销售价'] * p.data['数量'], p.data[p.index.field], sum)
+    retdata <- list()    # 返回值
+
+    # 函数参数：数值
+    fun.data <- list()
+    fun.data['成交次数'] <- p.data['单号']
+    fun.data['单品数'] <- p.data['品名']
+    fun.data['商品件数'] <- p.data['数量']
+    fun.data['成交额'] <- p.data['销售价'] * p.data['数量']
+    fun.data['折扣率'] <- p.data['折扣率']
+    #fun.data[''] <- p.data['']
+
+    # 函数参数：字段对应的处理函数
+    fun.fun <- list()
+    fun.fun[['成交次数']]  <- CaiCountUnique
+    fun.fun[['单品数']]    <- CaiCountUnique
+    fun.fun[['商品件数']]  <- sum
+    fun.fun[['成交额']]    <- sum
+    fun.fun[['折扣率']]    <- mean
+
+    # 计算
+    retdata <- CaiAggregate(fun.data, p.data[p.index.field], fun.fun)
+
+    # 格式化返回数据
+    if (length(p.sort.fields) > 1) {
+        # 根据指定的字段顺序进行排序
+        rownames(retdata) <- retdata[,1]
+        retdata           <- retdata[p.sort.fields,]
+        tmp <- dim(retdata)
+        rownames(retdata) <- 1:tmp[1]
+    } else if ('' != p.sortby.field) {
+        # 数据排序
+        retdata <- CaiDataframeOrder(retdata, p.sortby.field, p.decreasing)
+        tmp <- dim(retdata)
+        rownames(retdata) <- 1:tmp[1]
+    }
+
+    print(retdata)
+    return(retdata)
+
+
+    # 计算累计占比
     names(retdata$income) <- c(p.index.field, '成交额')
     # 折扣率
     retdata$off     = aggregate(p.data['折扣率'], p.data[p.index.field], mean)
@@ -118,43 +161,50 @@ CaiPosField <- function (p.data, p.index.field, p.sortby.field = FALSE, p.sort.f
     retdata$stat <- as.data.frame(retdata$stat)
 
 
-    
-    # 格式化返回数据
-    if (length(p.sort.fields) > 1) {
-        # 根据指定的字段顺序进行排序
-        #retdata$count <- retdata$count[p.sort.fields]
-        rownames(retdata$count) <- retdata$count[,1]
-        retdata$count           <- retdata$count[p.sort.fields,]
-        
-        rownames(retdata$product) <- retdata$product[,1]
-        retdata$product           <- retdata$product[p.sort.fields,]
-        
-        rownames(retdata$pnum) <- retdata$pnum[,1]
-        retdata$pnum           <- retdata$pnum[p.sort.fields,]
-        
-        rownames(retdata$income) <- retdata$income[,1]
-        retdata$income           <- retdata$income[p.sort.fields,]
-        
-        rownames(retdata$off) <- retdata$off[,1]
-        retdata$off           <- retdata$off[p.sort.fields,]
-    } else {
-        tmp.sort.key = 1
-        tmp.sort.dec = TRUE
-        if (FALSE == p.sortby.field) {
-            # 如果不是对字段进行排序的话，则对值进行排序
-            tmp.sort.key = 2;
-            tmp.sort.dec = TRUE
-        } else {
-            # 按字段排序,默认为升序
-            tmp.sort.key = 1;
-            tmp.sort.dec = FALSE
-        }
+    retdata
+}
 
-        retdata$count  <- retdata$count[order(retdata$count[, tmp.sort.key], decreasing=tmp.sort.dec),]
-        retdata$product<- retdata$product[order(retdata$product[, tmp.sort.key], decreasing=tmp.sort.dec),]
-        retdata$pnum   <- retdata$pnum[order(retdata$pnum[, tmp.sort.key], decreasing=tmp.sort.dec),]
-        retdata$income <- retdata$income[order(retdata$income[, tmp.sort.key], decreasing=tmp.sort.dec),]
-        retdata$off    <- retdata$off[order(retdata$off[, tmp.sort.key], decreasing=tmp.sort.dec),]
+CaiCountUnique <- function (x) {
+    # 计算向量x的唯一值的个数（去重）
+    length(unique(x))
+}
+
+CaiDataframeOrder <- function (p.data.frame, p.sortby, p.decreasing = FALSE) {
+    # 将data.frame按照某个字段排序
+    t <- names(p.data.frame)
+    index <- 1
+    for (i in t) {
+        if (p.sortby == i) {
+            break
+        }
+        index <- index + 1
+    }
+
+    print(index)
+
+    # return
+    p.data.frame[order(p.data.frame[, index], decreasing = p.decreasing),]
+}
+
+
+CaiAggregate <- function (
+                           p.data.x,               # 待计算的变量
+                           p.data.by,              # 分组变量
+                           p.data.fun              # 和p.data.y对应，不同的列值使用不同的函数来处理
+) {
+    # 对变量p.data.x进行透视计算
+
+    retdata <- list()
+    x.names <- names(p.data.x)
+
+    # 循环处理x的每一个子list
+    for (x in x.names) {
+        if (0 == length(retdata)) {
+            retdata <- aggregate(p.data.x[x], p.data.by, p.data.fun[[x]])
+        } else {
+            tmp <- aggregate(p.data.x[x], p.data.by, p.data.fun[[x]])
+            retdata[x] <- tmp[x]
+        }
     }
 
     retdata
