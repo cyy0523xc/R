@@ -7,7 +7,7 @@ CaiPos <- function (p.data)
 
     # 数据清洗与转换
     # 日期格式化
-    p.data['销售日期'] = as.Date(p.data[['销售日期']])
+    p.data[['销售日期']] <- as.Date(p.data[['销售日期']])
 
     # 增加工作时间段字段：上午，下午
     p.data['工作时间段'] <- sapply(strsplit(as.vector(p.data[['时间']]), ' '), function(x){x[2]})
@@ -17,16 +17,17 @@ CaiPos <- function (p.data)
 
     # 基本数据统计
     t.stat <- list()
-    t.stat['成交次数'] <- length(unique(p.data[['单号']]))
-    t.stat['天数'] <- length(unique(p.data[['销售日期']]))
-    #t.stat['日均成交次数'] <- t.stat[[]]
+    t.stat[['总成交次数']]  <- length(unique(p.data[['单号']]))
+    t.stat[['总天数']]      <- as.integer(max(p.data[['销售日期']]) - min(p.data[['销售日期']]))
+    t.stat[['总成交额']]    <- sum(p.data[['销售价']])
+    t.stat[['总单品数']]    <- length(unique(p.data[['品名']]))
+    t.stat[['总品牌数']]    <- length(unique(p.data[['品牌']]))
+    t.stat[['总品类数']]    <- length(unique(p.data[['品类']]))
+    t.stat[['总商品件数']]  <- sum(p.data[['数量']])
     #t.stat[''] <- length(unique[['']])
     #t.stat[''] <- length(unique[['']])
-    #t.stat[''] <- length(unique[['']])
-    #t.stat[''] <- length(unique[['']])
-    #t.stat[''] <- length(unique[['']])
-    #t.stat[''] <- length(unique[['']])
-    #t.stat[''] <- length(unique[['']])
+
+    p.data
 
     # 每日趋势
     retdata$day <- CaiPosField(p.data, '销售日期', p.sortby.field = '销售日期', p.decreasing = FALSE)
@@ -64,7 +65,8 @@ CaiPos <- function (p.data)
     # 成交件数分析
     retdata$pnum <- CaiPosField(p.data, '数量')
 
-    # 订单分析 
+    # 订单分析
+    # 以订单为基础，分析每个订单的商品件数，成交额，折扣率
     retdata$order_detail = list()
     # 订单对应的商品数量
     retdata$order_detail  <- aggregate(p.data['数量'], p.data['单号'], sum)
@@ -76,7 +78,8 @@ CaiPos <- function (p.data)
     t.off   <- aggregate(p.data['原价金额'], p.data['单号'], sum)
     retdata$order_detail['折扣率'] <- t.income['销售价'] / t.off['原价金额'] 
 
-    # 成交商品件数分析
+    # 订单汇总分析
+    # 按照订单的成交的商品件数进行汇总
     retdata$order <- list()
     retdata$order <- aggregate(retdata$order_detail['成交额'], retdata$order_detail['商品件数'], sum)
     t.pnum   <- table(retdata$order_detail['商品件数'])
@@ -112,11 +115,11 @@ CaiPosField <- function (p.data, p.index.field, p.sortby.field = '', p.sort.fiel
 
     # 函数参数：数值
     fun.data <- list()
-    fun.data['成交次数'] <- p.data['单号']
-    fun.data['单品数'] <- p.data['品名']
-    fun.data['商品件数'] <- p.data['数量']
-    fun.data['成交额'] <- p.data['销售价'] * p.data['数量']
-    fun.data['折扣率'] <- p.data['折扣率']
+    fun.data['成交次数']  <- p.data['单号']
+    fun.data['单品数']    <- p.data['品名']
+    fun.data['商品件数']  <- p.data['数量']
+    fun.data['成交额']    <- p.data['销售价'] * p.data['数量']
+    fun.data['折扣率']    <- p.data['折扣率']
     #fun.data[''] <- p.data['']
 
     # 函数参数：字段对应的处理函数
@@ -145,23 +148,17 @@ CaiPosField <- function (p.data, p.index.field, p.sortby.field = '', p.sort.fiel
     }
 
     print(retdata)
-    return(retdata)
 
-
-    # 计算累计占比
-    names(retdata$income) <- c(p.index.field, '成交额')
-    # 折扣率
-    retdata$off     = aggregate(p.data['折扣率'], p.data[p.index.field], mean)
-    names(retdata$off) <- c(p.index.field, '折扣率')
-    # 连带率
-    retdata$stat[p.index.field] <- retdata$count[p.index.field]
-    retdata$stat['连带率'] <- retdata$pnum['商品件数'] / retdata$count['成交次数']
-    retdata$stat['件单价'] <- retdata$income['成交额'] / retdata$pnum['商品件数']
-    retdata$stat['成交价'] <- retdata$income['成交额'] / retdata$count['成交次数']
-    retdata$stat <- as.data.frame(retdata$stat)
-
+    # 连带率，件单价，成交价
+    retdata['连带率'] <- retdata['商品件数'] / retdata['成交次数']
+    retdata['件单价'] <- retdata['成交额'] / retdata['商品件数']
+    retdata['成交价'] <- retdata['成交额'] / retdata['成交次数']
 
     retdata
+}
+
+CaiOrderCalField <- function () {
+
 }
 
 CaiCountUnique <- function (x) {
@@ -187,6 +184,15 @@ CaiDataframeOrder <- function (p.data.frame, p.sortby, p.decreasing = FALSE) {
 }
 
 
+CaiAggregateV2 <- function (
+                           p.data.x,               # 待计算的变量
+                           p.data.by,              # 分组变量
+                           p.data.fun              # 和p.data.y对应，不同的列值使用不同的函数来处理
+) {
+    # 对变量p.data.x进行透视计算
+    sapply(p.data.x, function(p.x, p.by))
+}
+    
 CaiAggregate <- function (
                            p.data.x,               # 待计算的变量
                            p.data.by,              # 分组变量
@@ -208,4 +214,25 @@ CaiAggregate <- function (
     }
 
     retdata
+}
+
+CaiFieldRatio <- function(p.data, p.sum=FALSE) {
+    # 计算字段的值的占比
+    if (FALSE == p.sum) {
+        p.sum <- sum(p.data)
+    }
+
+    p.data / p.sum
+}
+
+CaiFieldCumulative <- function(p.data) {
+    # 计算字段的累计值，例如计算累计占比
+    ret <- c()
+    cumulative <- 0
+    for (i in p.data) {
+        cumulative <- cumulative + i
+        ret <- c(ret, cumulative)
+    }
+
+    ret
 }
