@@ -168,16 +168,11 @@ CaiCountUnique <- function (x) {
 
 CaiDataframeOrder <- function (p.data.frame, p.sortby, p.decreasing = FALSE) {
     # 将data.frame按照某个字段排序
-    t <- names(p.data.frame)
-    index <- 1
-    for (i in t) {
-        if (p.sortby == i) {
-            break
-        }
-        index <- index + 1
+    index <- which(names(p.data.frame) == p.sortby)
+    
+    if (!(index > 0)) {
+        return(FALSE)
     }
-
-    print(index)
 
     # return
     p.data.frame[order(p.data.frame[, index], decreasing = p.decreasing),]
@@ -190,7 +185,7 @@ CaiAggregateV2 <- function (
                            p.data.fun              # 和p.data.y对应，不同的列值使用不同的函数来处理
 ) {
     # 对变量p.data.x进行透视计算
-    sapply(p.data.x, function(p.x, p.by))
+    #sapply(p.data.x, function(p.x, p.by))
 }
     
 CaiAggregate <- function (
