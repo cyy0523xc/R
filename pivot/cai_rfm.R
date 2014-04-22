@@ -26,6 +26,67 @@ CaiSimpleRFM <- function (p.data, p.r = 0, p.f = 0, p.m = 0) {
     p.data
 }
 
+CaiRFM <- function (p.data, p.r = 2, p.f = 2, p.m = 2, p.method = 'simple') {
+    # 更加通用RFM分析：可以定义每个维度上切分的客户群数量，可以指定客户群切分的方法
+    # 参数：
+    #    p.data: data.frame格式，包含4个字段：
+    #            ID：客户ID（唯一值）
+    #            R： 近度
+    #            F： 频度
+    #            M： 额度
+    #    p.r, p.f, p.m: 每个维度上切分的客户群数量，默认为2
+    #    p.method: 客户群切分的方法：
+    #            simple: 简单的切分方法，按照数值进行等值切分
+    #            kmeans: kmeans聚类切分
+    # 返回：
+    #    list()
+
+    t.len <- length(p.data$ID)
+    if (p.r >= 2) {
+        p.data$NewR <- CaiDivideCumtomer(p.data$R, p.r, p.method)
+    } else {
+        p.data$NewR <- rep(0, t.len)
+    }
+    if (p.f >= 2) {
+        p.data$NewF <- CaiDivideCumtomer(p.data$F, p.f, p.method)
+    } else {
+        p.data$NewF <- rep(0, t.len)
+    }
+    if (p.m >= 2) {
+        p.data$NewM <- CaiDivideCumtomer(p.data$M, p.m, p.method)
+    } else {
+        p.data$NewM <- rep(0, t.len)
+    }
+
+    # 把值合并到一个字段里，方便分析
+    p.data$RFM <- paste(p.data$NewR, p.data$NewF, p.data$NewM, sep='')
+
+    # return
+    p.data    
+}
+
+CaiDivideCumtomer <- function (p.data, p.num = 2, p.method = 'simple') {
+    # 切分客户
+
+    retdata <- c()
+    if ('simple' == p.method) {
+        t.max <- max(p.data)
+        t.min <- min(p.data)
+        t.sec <- (t.max - t.min) / p.num
+        print(c(t.min, t.max, t.sec))   # test
+        
+        retdata <- trunc((p.data - t.min) / t.sec)
+        retdata[retdata == p.num] <- p.num - 1
+        print(retdata)
+    } else if ('kmeans' == p.method) {
+        t.data <- kmeans(p.data, p.num)
+        retdata <- t.data$cluster - 1
+    }
+
+    # return
+    retdata
+}
+
 CaiOrderToRFM <- function (p.order, p.name.orderid, p.name.id, p.name.r, p.name.m) {
     # 将订单数据处理成RFM的输入数据
     # 参数：
