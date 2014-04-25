@@ -3,7 +3,8 @@ CaiSimpleKmeans <- function (p.arr, p.num, p.centers = c(), p.algorithm = mean) 
     # p.arr : 一维向量，且是按从小到大排序的
     # p.num : 聚类后的个数
     # p.centers : 可以由外部指定中心点
-    # p.algorithm : 中心点选取算法，默认为平均值。可以设置为中位数（median），或者自定义的算法
+    # p.algorithm : 中心点选取算法，默认为平均值。可以设置为中位数（median），或者自定义的算法，例如kmedoids算法的中心点选取
+    
 
     if (p.num < 2) {
         return(FALSE)
@@ -14,9 +15,14 @@ CaiSimpleKmeans <- function (p.arr, p.num, p.centers = c(), p.algorithm = mean) 
     if (length(p.centers) != p.num) {
         # 按照一定的间隔选取中心点
         t.unique <- unique(p.arr)
-        t.len <- trunc(length(t.unique) / (p.num - 1))
+        t.len <- trunc(length(t.unique) / p.num)
+        t.index <- trunc(t.len / 2)    # 通常情况下可以避免初始中心点取集合中的最大和最小值，使得程序不容易陷入最大和最小值上的局部最优解
+        if (t.index < 1) {
+            t.index <- 1
+        }
+        
+        # 计算中心点
         p.centers <- vector(length=p.num)
-        t.index <- 1
         for (i in 1:p.num) {
             p.centers[i] <- t.unique[t.index]
             t.index <- t.index + t.len
@@ -58,7 +64,8 @@ CaiSimpleKmeans <- function (p.arr, p.num, p.centers = c(), p.algorithm = mean) 
 
 CaiCalNewCenters <- function(p.arr, p.centers, p.algorithm) {
     # 计算新的中心点
-    
+   
+    # 按照中心点将数据归类
     t.centers.index <- 1
     t.n <- length(p.centers)
     new.centers <- vector('list', length = t.n)
@@ -75,11 +82,45 @@ CaiCalNewCenters <- function(p.arr, p.centers, p.algorithm) {
     # 计算新的中心点
     retdata <- list()
     retdata$centers.list <- new.centers
-    retdata$centers <- sapply(new.centers, p.algorithm)
+    if (!is.function(p.algorithm) && 'kmedoids' == p.algorithm) {
+        # kmedoids的中心点选取算法
+        retdata$centers <- vector(length=t.n)
+        for (i in 1:t.n) {
+            retdata$centers[i] <- CaiCalKmedoidsCenter(new.centers[[i]], p.centers[i]);
+        }
+    } else {
+        # 其他中心点的选取算法，例如mean，median等
+        retdata$centers <- sapply(new.centers, p.algorithm)
+    }
 
     retdata
 }
 
 
+CaiCalKmedoidsCenter <- function(p.arr, p.center) {
+    # 在p.arr 中找到新的center
+    # kmedoids聚类的中心点计算
 
+    t.len <- length(p.arr)
+
+    # 当前的中心点的聚集度
+    t.curr.sum <- sum(abs(p.arr - p.center))
+
+    # 初始化中心点
+    ret.center <- p.center
+
+    # 计算其余每个点作为中心点的聚集度
+    for (i in p.arr) {
+        if (i != p.center) {
+            t.sum <- sum(abs(p.arr - i))
+            if (t.sum < t.curr.sum) {
+                # 如果聚集度更高的化，则设置为当前的中心点
+                ret.center <- i
+                t.curr.sum <- t.sum
+            }
+        }
+    }
+
+    ret.center
+}
 
